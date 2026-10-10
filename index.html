@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Universal AI Cost Calculator Online — API-Preise & Business ROI Simulator</title>
+<meta name="description" content="Kostenloser interaktiver All-in-One KI-Kostenrechner. Vergleichen Sie API-Token-Ausgaben für GPT-4o, Claude 3.5, Midjourney und den ROI der Automatisierung.">
+<style>
+:root{--primary:#2563eb;--primary-hover:#1d4ed8;--success:#16a34a;--danger:#dc2626;--bg:#f8fafc;--card-bg:#ffffff;--text:#0f172a;--text-muted:#64748b;--border:#e2e8f0;--accent:#f59e0b;--purple:#7c3aed}
+*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+body{background:var(--bg);color:var(--text);padding:20px;display:flex;justify-content:center;align-items:center;min-height:100vh}
+.wrapper{background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:24px;width:100%;max-width:520px;box-shadow:0 4px 6px -1px rgba(0,0,0,0.05)}
+h1{font-size:22px;font-weight:700;margin-bottom:4px;text-align:center}
+.subtitle{font-size:14px;color:var(--text-muted);text-align:center;margin-bottom:20px}
+.live-meter{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:20px;text-align:center}
+.meter-label{font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px}
+.bar-container{background:var(--border);border-radius:20px;height:12px;width:100%;overflow:hidden;position:relative}
+.bar-fill{background:var(--primary);width:35%;height:100%;transition:all 0.4s ease}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--bg);padding:4px;border-radius:10px;margin-bottom:20px;border:1px solid var(--border)}
+.tab-btn{padding:10px 2px;background:none;border:none;border-radius:8px;font-size:11px;font-weight:700;color:var(--text-muted);cursor:pointer;transition:all 0.2s;text-align:center}
+.tab-btn.active{background:var(--card-bg);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,0.1)}
+.tab-content{display:none}
+.tab-content.active{display:block}
+.group{margin-bottom:16px}
+label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:var(--text)}
+select,input[type="number"]{width:100%;padding:11px;border:1px solid var(--border);border-radius:10px;font-size:15px;background:#fff;color:var(--text);transition:border 0.2s}
+select:focus,input:focus{border-color:var(--primary);outline:none}
+input[type="range"]{width:100%;margin:8px 0;cursor:pointer}
+.range-val{font-size:14px;font-weight:700;color:var(--primary);float:right}
+.os-btn{width:100%;padding:10px;background:#fff;border:1px solid var(--purple);color:var(--purple);border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s;text-align:center;margin-top:8px}
+.os-btn.active{background:var(--purple);color:#fff}
+.calc-btn{width:100%;padding:14px;background:var(--primary);color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;margin-top:10px;box-shadow:0 4px 6px -1px rgba(37,99,235,0.2);transition:background 0.2s}
+.calc-btn:hover{background:var(--primary-hover)}
+.skynet-box{background:#fee2e2;border:1px solid #fca5a5;border-radius:12px;padding:14px;margin-top:20px;display:none}
+.skynet-title{font-size:13px;font-weight:700;color:var(--danger);margin-bottom:6px;text-transform:uppercase;text-align:center}
+.results{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:20px;display:none}
+.res-title{font-size:14px;font-weight:700;color:var(--text-muted);margin-bottom:10px;text-align:center;text-transform:uppercase}
+.res-row{display:flex;justify-content:space-between;padding:8px 0;font-size:14px;border-bottom:1px dashed var(--border);align-items:center}
+.res-row:last-child{border-bottom:none}
+.res-val{font-weight:700;color:var(--primary);text-align:right;max-width:65%}
+.res-val.loss{color:var(--danger)}
+.ad{display:none;margin-top:15px;min-height:90px;text-align:center;justify-content:center;align-items:center;width:100%}
+.seo-text{font-size:12px;color:var(--text-muted);margin-top:24px;text-align:justify;line-height:1.4;border-top:1px solid var(--border);padding-top:16px;display:none}
+</style>
+</head>
+<body>
+<div class="wrapper">
+<h1>KI-Budgetrechner</h1>
+<div class="subtitle">Universeller Simulator für KI-Kosten & Automatisierungs-ROI</div>
+
+<div class="live-meter">
+<div class="meter-label">KI-Systemauslastung: <span id="live-preview-zone">Systemanalyse</span></div>
+<div class="bar-container"><div class="bar-fill" id="bar-fill"></div></div>
+</div>
+
+<div class="tabs">
+<button class="tab-btn active" onclick="switchTab('llm', this)">Text & API</button>
+<button class="tab-btn" onclick="switchTab('media', this)">Medien & GPU</button>
+<button class="tab-btn" onclick="switchTab('business', this)">Business ROI</button>
+</div>
+<!-- TAB 1: TEXT & API -->
+<div id="tab-llm" class="tab-content active">
+<div class="group">
+<label for="model">Großes Sprachmodell (LLM)</label>
+<select id="model" onchange="updatePreview()">
+<option value="gpt4o">OpenAI GPT-4o</option>
+<option value="claude35">Claude 3.5 Sonnet</option>
+<option value="gemini15">Gemini 1.5 Pro</option>
+<option value="llama3">Llama 3.1 (Cloud API)</option>
+</select>
+</div>
+<div class="group">
+<label for="words-in">Eingabe-Prompt-Volumen (Wörter/Tag) <span class="range-val" id="words-in-val">10.000</span></label>
+<input type="range" id="words-in" min="1000" max="200000" value="10000" step="1000" oninput="document.getElementById('words-in-val').innerText=parseInt(this.value).toLocaleString('de-DE'); updatePreview();">
+</div>
+<div class="group">
+<label for="words-out">Ausgabe-Antwort-Volumen (Wörter/Tag) <span class="range-val" id="words-out-val">20.000</span></label>
+<input type="range" id="words-out" min="1000" max="200000" value="20000" step="1000" oninput="document.getElementById('words-out-val').innerText=parseInt(this.value).toLocaleString('de-DE'); updatePreview();">
+</div>
+<div class="group">
+<label for="requests">Anzahl der Anfragen pro Monat <span class="range-val" id="requests-val">5.000</span></label>
+<input type="range" id="requests" min="500" max="100000" value="5000" step="500" oninput="document.getElementById('requests-val').innerText=parseInt(this.value).toLocaleString('de-DE'); updatePreview();">
+</div>
+<button class="os-btn" id="os-toggle" onclick="toggleOpenSource()">Autonomen Server bereitstellen (Open-Source)</button>
+</div>
+
+<!-- TAB 2: MEDIEN & GRAFIK -->
+<div id="tab-media" class="tab-content">
+<div class="group">
+<label for="media-tool">Generierungs-Plattform</label>
+<select id="media-tool" onchange="updatePreview()">
+<option value="midjourney">Midjourney Pro / Dall-E 3</option>
+<option value="stable-cloud">Stable Diffusion (Cloud)</option>
+<option value="runway">Runway Gen-3 (KI-Video)</option>
+</select>
+</div>
+<div class="group">
+<label for="images-count">Bilder / Generierungen pro Monat <span class="range-val" id="images-val">500</span></label>
+<input type="range" id="images-count" min="50" max="10000" value="500" step="50" oninput="document.getElementById('images-val').innerText=parseInt(this.value).toLocaleString('de-DE'); updatePreview();">
+</div>
+<div class="group">
+<label for="video-sec">Videogenerierungs-Sekunden / Monat <span class="range-val" id="video-val">120</span></label>
+<input type="range" id="video-sec" min="0" max="3600" value="120" step="30" oninput="document.getElementById('video-val').innerText=parseInt(this.value).toLocaleString('de-DE'); updatePreview();">
+</div>
+<button class="os-btn" id="gpu-toggle" onclick="toggleGpuHardware()">Eigene Hardware erwerben (Eigene dedizierte GPU)</button>
+</div>
+
+<!-- TAB 3: BUSINESS ROI -->
+<div id="tab-business" class="tab-content">
+<div class="group">
+<label for="staff">Optimierte / ersetzte Mitarbeiter (Personen) <span class="range-val" id="staff-val">3</span></label>
+<input type="range" id="staff" min="1" max="50" value="3" oninput="document.getElementById('staff-val').innerText=this.value; updatePreview();">
+</div>
+<div class="group">
+<label for="salary">Durchschnittliches Monatsgehalt (€)</label>
+<input type="number" id="salary" value="4000" min="1" max="250000" oninput="updatePreview()">
+</div>
+<div class="group">
+<label for="tax-deficit">KI-Qualitätsdefizit & Redaktionsgebühr (%) <span class="range-val" id="tax-val">20%</span></label>
+<input type="range" id="tax-deficit" min="0" max="90" value="20" step="5" oninput="document.getElementById('tax-val').innerText=this.value+'%'; updatePreview();">
+</div>
+</div>
+
+<div class="ad" id="ads"><div id="container-e8c895e6c70ade8e4ef4a72354f42e97"></div></div>
+
+<button class="calc-btn" onclick="calculateAiMetrics()">Finanzaudit durchführen</button>
+
+<div class="results" id="results-box">
+<div class="res-title">Integriertes Finanzbuch</div>
+<div class="res-row"><span>KI-Infrastruktur-Overhead (Monatlich):</span><span class="res-val" id="res-infra">0 €</span></div>
+<div class="res-row"><span>Verdeckte Qualitätsdefizit-Steuer / Redaktionskosten:</span><span class="res-val loss" id="res-quality">0 €</span></div>
+<div class="res-row" id="payback-row" style="display:none; border-bottom:1px dashed var(--border);"><span>Amortisationszeit der Hardware:</span><span class="res-val" id="res-payback" style="color:var(--purple)">0</span></div>
+<div class="res-row"><span>Netto-Budgeteinsparungen (Jährlich):</span><span class="res-val" id="res-savings" style="color:var(--success)">0 €</span></div>
+<div class="res-row"><span>Return on Investment (ROI) der KI-Strategie:</span><span class="res-val" id="res-roi">0%</span></div>
+</div>
+
+<div class="skynet-box" id="skynet-container">
+<div class="skynet-title">🔮 Jüngster Tag & Skynet-Index</div>
+<div class="res-row" style="border-bottom:none; color:#991b1b; font-size:12px; text-align:justify;"><span id="skynet-verdict">Führen Sie das Audit aus, um den Automatisierungsgrad zu bewerten.</span></div>
+</div>
+
+<div class="seo-text" id="seo-box">
+Unser fortschrittlicher Online-KI-Kostenrechner bewertet Bereitstellungsausgaben, indem er finanzielle Kennzahlen über Enterprise-LLM-Token-Frameworks (GPT-4o, Claude 3.5 Sonnet) und rekursive Cloud-Grafiknutzungsmodelle verarbeitet. Die centrale analytische Engine bewertet die Personaloptimierung und generiert automatisierte Prognosen zum Return on Investment (ROI) für die Geschäftsprozessautomatisierung. Spezialisierte Subroutinen verarbeiten Hardware-Akquisitions-Amortisationsprojektionen für dedizierte lokale Grafikkarten (RTX 4090) und berechnen fundamentale Risikoparameter, die an die Verschlechterung der Qualität generativer Inhalte und den kontinuierlichen menschlichen Validierungsaufwand gebunden sind. Jedes einzelne Dataset kompiliert zu 100 % lokal im Browser, um Ihre finanzielle Privatsphäre zu schützen.
+</div>
+</div>
+<script>
+let currentTab = 'llm';
+let isOpenSourceActive = false;
+let isGpuHardwareActive = false;
+
+const aiPricesUSD = {
+  gpt4o: { in: 5.0, out: 15.0 },
+  claude35: { in: 3.0, out: 15.0 },
+  gemini15: { in: 1.25, out: 5.0 },
+  llama3: { in: 0.20, out: 0.60 },
+  midjourney: 0.05,
+  'stable-cloud': 0.01,
+  runway: 0.15
+};
+
+const eurToUSD = 1.11; 
+
+function switchTab(tabName, btn) {
+  currentTab = tabName;
+  const buttons = document.querySelectorAll('.tab-btn');
+  buttons.forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  const contents = document.querySelectorAll('.tab-content');
+  contents.forEach(c => c.classList.remove('active'));
+  document.getElementById('tab-' + tabName).classList.add('active');
+  updatePreview();
+}
+
+function toggleOpenSource() {
+  isOpenSourceActive = !isOpenSourceActive;
+  const btn = document.getElementById('os-toggle');
+  if (isOpenSourceActive) {
+    btn.classList.add('active');
+    btn.innerText = "Open-Source-Modus: AKTIV";
+  } else {
+    btn.classList.remove('active');
+    btn.innerText = "Autonomen Server bereitstellen (Open-Source)";
+  }
+  updatePreview();
+}
+
+function toggleGpuHardware() {
+  isGpuHardwareActive = !isGpuHardwareActive;
+  const btn = document.getElementById('gpu-toggle');
+  if (isGpuHardwareActive) {
+    btn.classList.add('active');
+    btn.innerText = "Eigener GPU-Modus: AKTIV";
+  } else {
+    btn.classList.remove('active');
+    btn.innerText = "Eigene Hardware erwerben (Eigene dedizierte GPU)";
+  }
+  updatePreview();
+}
+
+function calculateAllAiMetrics() {
+  const model = document.getElementById('model').value;
+  const wordsIn = parseFloat(document.getElementById('words-in').value);
+  const wordsOut = parseFloat(document.getElementById('words-out').value);
+  const requests = parseFloat(document.getElementById('requests').value);
+
+  const tokensInMillions = ((wordsIn / 0.75) * requests) / 1000000;
+  const tokensOutMillions = ((wordsOut / 0.75) * requests) / 1000000;
+
+  let llmCostUSD = (tokensInMillions * aiPricesUSD[model].in) + (tokensOutMillions * aiPricesUSD[model].out);
+  if (isOpenSourceActive) {
+    llmCostUSD = llmCostUSD * 0.10;
+  }
+
+  const mediaTool = document.getElementById('media-tool').value;
+  const imagesCount = parseFloat(document.getElementById('images-count').value);
+  const videoSec = parseFloat(document.getElementById('video-sec').value);
+
+  let mediaCostUSD = (imagesCount * aiPricesUSD[mediaTool]) + (videoSec * (mediaTool === 'runway' ? aiPricesUSD.runway : 0.02));
+  if (isGpuHardwareActive) {
+    mediaCostUSD = 15;
+  }
+
+  const totalInfraCostUSD = llmCostUSD + mediaCostUSD;
+  const totalInfraCostEUR = totalInfraCostUSD / eurToUSD;
+
+  const staff = parseInt(document.getElementById('staff').value);
+  const salary = parseFloat(document.getElementById('salary').value) || 0;
+  const taxDeficitPercent = parseFloat(document.getElementById('tax-deficit').value);
+
+  const humanCostMonth = staff * salary;
+  const qualityTaxMonth = humanCostMonth * (taxDeficitPercent / 100);
+
+  const grossSavingsYear = (humanCostMonth - totalInfraCostEUR) * 12;
+  const netSavingsYear = grossSavingsYear - (qualityTaxMonth * 12);
+  const roiValue = totalInfraCostEUR > 0 ? (netSavingsYear / (totalInfraCostEUR * 12)) * 100 : 0;
+
+  let paybackMonths = 0;
+  if (isGpuHardwareActive || isOpenSourceActive) {
+    const hardwareCostUSD = (isGpuHardwareActive ? 2000 : 0) + (isOpenSourceActive ? 3500 : 0);
+    const originalLlmCostUSD = (tokensInMillions * aiPricesUSD[model].in) + (tokensOutMillions * aiPricesUSD[model].out);
+    const originalMediaCostUSD = (imagesCount * aiPricesUSD[mediaTool]) + (videoSec * (mediaTool === 'runway' ? aiPricesUSD.runway : 0.02));
+    
+    const monthlyHardwareSavingsUSD = (isOpenSourceActive ? originalLlmCostUSD * 0.90 : 0) + (isGpuHardwareActive && originalMediaCostUSD > 15 ? originalMediaCostUSD - 15 : 0);
+    paybackMonths = monthlyHardwareSavingsUSD > 0 ? hardwareCostUSD / monthlyHardwareSavingsUSD : 0;
+  }
+
+  return {
+    infra: Math.round(totalInfraCostEUR).toLocaleString('de-DE'),
+    quality: Math.round(qualityTaxMonth).toLocaleString('de-DE'),
+    savings: Math.round(netSavingsYear).toLocaleString('de-DE'),
+    roi: Math.round(roiValue),
+    payback: paybackMonths > 0 ? Math.ceil(paybackMonths) + " Mon." : "Amortisiert",
+    staff: staff,
+    taxPercent: taxDeficitPercent
+  };
+}
+
+function updatePreview() {
+  const data = calculateAllAiMetrics();
+  if (!data) return;
+
+  let zone = "Intelligente KI-Nutzung";
+  let color = "var(--success)";
+  let pct = 70;
+
+  if (data.roi < 10 || data.taxPercent > 50) {
+    zone = "🔴 KI-Burn-Rate kritisch (Finanzblase)";
+    color = "var(--danger)";
+    pct = 20;
+  } else if (isOpenSourceActive && isGpuHardwareActive) {
+    zone = "🏴‍☠️ Autonomer Tech-Souverän";
+    color = "var(--purple)";
+    pct = 95;
+  } else if (parseFloat(data.infra.replace(/\./g, '')) > 4500) {
+    zone = "🟡 Vendor Lock-in-Risiko (Hohe API-Abhängigkeit)";
+    color = "var(--accent)";
+    pct = 45;
+  }
+
+  const preview = document.getElementById('live-preview-zone');
+  preview.innerText = zone; 
+  preview.style.color = color;
+
+  const fill = document.getElementById('bar-fill');
+  fill.style.width = pct + '%'; 
+  fill.style.background = color;
+}
+
+window.onload = function() {
+  updatePreview();
+};
+
+function showAds() {
+  const c = document.getElementById('ads');
+  if (!window.adScriptLoaded) {
+    window.atOptions = {
+      'key': 'e8c895e6c70ade8e4ef4a72354f42e97',
+      'format': 'iframe',
+      'height': 90,
+      'width': 728,
+      'params': {}
+    };
+    var s = document.createElement('script');
+    s.type = 'text/javascript';
+    s.async = !0;
+    s.src = ['https://', 'bagelstoppage.', 'com/', 'e8c895e6c70ade8e4ef4a72354f42e97/', 'invoke.js'].join('');
+    c.appendChild(s);
+    window.adScriptLoaded = !0;
+  }
+  c.style.display = 'flex';
+}
+
+function calculateAiMetrics() {
+  const data = calculateAllAiMetrics();
+  if (!data) return;
+
+  document.getElementById('res-infra').innerText = data.infra + " €";
+  document.getElementById('res-quality').innerText = data.quality + " €";
+  document.getElementById('res-savings').innerText = data.savings + " €";
+  document.getElementById('res-roi').innerText = (data.roi > 0 ? "+" : "") + data.roi + "%";
+
+  if (isGpuHardwareActive || isOpenSourceActive) {
+    document.getElementById('res-payback').innerText = data.payback;
+    document.getElementById('payback-row').style.display = 'flex';
+  } else {
+    document.getElementById('payback-row').style.display = 'none';
+  }
+
+  let verdict = `Sie haben operative Ziele erfolgreich an automatisierte Agenten ausgelagert und ${data.staff} Unternehmensrollen optimiert. Die Infrastruktur läuft stabil mit sicheren lokalen Parametern.`;
+  const rawSavings = parseInt(data.savings.replace(/\./g, ''));
+  
+  if (isOpenSourceActive && isGpuHardwareActive) {
+    verdict = `🏴‍☠️ MAXIMALE TECH-SOUVERÄNITÄT: Sie haben die Abhängigkeit von Silicon-Valley-Tech-Monopolen vollständig gekappt! OpenAI und Anthropic werden keine Luxusyachten auf Kosten Ihrer Pipeline-Ausgaben kaufen. Ihre eigene RTX 4090 und lokale Open-Source-Modelle verarbeiten Gigabytes an Produktionsdaten absolut kostenlos.`;
+  } else if (data.taxPercent >= 45) {
+    verdict = `🧠 MENSCHLICHE LEITLINIE AKTIVIERT: Automatisierte Systeme laufen in großem Umfang, aber Ihr Qualitätsdefizit-Wartungsparameter liegt bei schweren ${data.taxPercent}%. LLMs liefern zwar enorme Textmengen, aber die finanziellen Kosten für die Behebung von KI-Halluzinationen und das Umgehen von Google-Filtern verringern Ihre Nettomarge.`;
+  } else if (rawSavings > 100000) {
+    verdict = `⚠️ SKYNET-ALLOKATIONSMODUS: Der betriebliche Automatisierungs-Fußabdruck ist kritisch! Sie haben die strukturellen Abläufe erheblich skaliert und ${data.staff} Stellen eingespart. Digitale Workflows laufen rund um die Uhr ohne Pausen — aber bleiben Sie wachsam: Wenn die kommerziellen API-Server abstürzen, verwandelt sich Ihr Unternehmen sofort in einen Kürbis.`;
+  }
+
+  document.getElementById('skynet-verdict').innerText = verdict;
+  document.getElementById('results-box').style.display = 'block';
+  document.getElementById('skynet-container').style.display = 'block';
+  document.getElementById('seo-box').style.display = 'block';
+  updatePreview();
+  showAds();
+}
+</script>
+</body>
+</html>
